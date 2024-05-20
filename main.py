@@ -11,10 +11,7 @@ import random
 from searches import search
 
 def main():
-    USER_DATA_DIR = "C:\\Users\\adiego\\AppData\\Local\\Microsoft\\Edge\\User Data"
-    MIN_SEARCH_INTERVAL = 8
-    MAX_SEARCH_INTERVAL = 20
-
+    print(os.environ.get('USER_DATA_DIR'))
 
     profile_dir_dict = [
         {"profile": "Profile 7", "recursion": 10},
@@ -25,12 +22,12 @@ def main():
     try:
         for profile_dir in profile_dir_dict:
             # Ensure the user data directory exists
-            if not os.path.exists(USER_DATA_DIR):
-                print(f"User data directory does not exist: {USER_DATA_DIR}")
+            if not os.path.exists(os.environ.get('USER_DATA_DIR')):
+                print(f"User data directory does not exist: {os.environ.get('USER_DATA_DIR')}")
                 return
 
             # Ensure the profile directory exists
-            profile_path = os.path.join(USER_DATA_DIR, profile_dir["profile"])
+            profile_path = os.path.join(os.environ.get('USER_DATA_DIR'), profile_dir["profile"])
             if not os.path.exists(profile_path):
                 print(f"Profile directory does not exist: {profile_path}")
                 return
@@ -40,7 +37,7 @@ def main():
 
             # Set up Edge options to use the specified profile
             options = Options()
-            options.add_argument(f"user-data-dir={USER_DATA_DIR}")
+            options.add_argument(f"user-data-dir={os.environ.get('USER_DATA_DIR')}")
             options.add_argument(f"profile-directory={profile_dir["profile"]}")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
@@ -70,7 +67,8 @@ def main():
                     search_box.send_keys(random.choice(search).lower())
                     search_box.submit()
                     
-                    log_progress(profile_dir, profile_dir["recursion"], search_count, math.floor(random.uniform(MIN_SEARCH_INTERVAL, MAX_SEARCH_INTERVAL)))
+                    search_interval = math.floor(random.uniform(int(os.environ.get('MIN_SEARCH_INTERVAL')), int(os.environ.get('MAX_SEARCH_INTERVAL'))))
+                    log_progress(profile_dir, profile_dir["recursion"], search_count, int(search_interval))
 
                     search_box = driver.find_element(By.NAME, "q")
                     search_box.clear()
