@@ -1,4 +1,3 @@
-import math
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service as EdgeService
@@ -11,13 +10,12 @@ import random
 from searches import search
 
 def main():
-    print(os.environ.get('USER_DATA_DIR'))
-
     profile_dir_dict = [
         {"profile": "Profile 7", "recursion": 10},
         {"profile": "Profile 6", "recursion": 10},
         {"profile": "Profile 1", "recursion": 30}
     ]
+    search_history = []
 
     try:
         for profile_dir in profile_dir_dict:
@@ -55,33 +53,35 @@ def main():
                 # Adding a short delay before starting to ensure proper initialization
                 time.sleep(2)
 
-                # Open the Edge browser and navigate to a search engine
                 driver.get("https://www.bing.com")
 
                 search_count = 0
                 for _ in range(profile_dir["recursion"]):
                     search_count += 1
+                    search_target = ""
+                    is_search_target_unique = False
                     
-                    # Locate the search box, enter a query, and perform the search
+                    while not is_search_target_unique:
+                        search_target = random.choice(search).lower()
+                        if not search_target in search_history:
+                            search_history.append(search_target)
+                            is_search_target_unique = True
+
                     search_box = driver.find_element(By.NAME, "q")
-                    search_box.send_keys(random.choice(search).lower())
+                    search_box.send_keys(search_target)
                     search_box.submit()
                     
-                    search_interval = math.floor(random.uniform(int(os.environ.get('MIN_SEARCH_INTERVAL')), int(os.environ.get('MAX_SEARCH_INTERVAL'))))
-                    log_progress(profile_dir, profile_dir["recursion"], search_count, int(search_interval))
+                    search_interval = random.randint(int(os.environ.get('MIN_SEARCH_INTERVAL')), int(os.environ.get('MAX_SEARCH_INTERVAL')))
+                    log_progress(driver, profile_dir, profile_dir["recursion"], search_count, search_interval)
 
                     search_box = driver.find_element(By.NAME, "q")
                     search_box.clear()
-                
-                # Wait for the results to load (implicit wait)
-                driver.implicitly_wait(15)
 
             except Exception as e:
                 print("Error during WebDriver execution:", e)
     finally:
         if 'driver' in locals():
             driver.quit()
-            print("DONE! Pweh, another day of MS Reward Points, huh?")
 
 def kill_edge_processes():
     try:
@@ -89,11 +89,21 @@ def kill_edge_processes():
     except subprocess.CalledProcessError as e:
         print(f"Failed to kill existing Edge processes: {e}")
 
-def log_progress(profile, total_search_num, search_count, search_interval):
+def log_progress(driver, profile, total_search_num, search_count, search_interval):
     print("-------------------------------------------------")
     for i in range(1, search_interval + 1):
-        print(f"{profile.get("profile")} | Search #{search_count} out of {total_search_num} ({search_interval - i} sec/s)")
-        time.sleep(1)
+        percentage = (i / search_interval) * 100
+        print(f"{profile.get("profile")} | Search #{search_count} out of {total_search_num} ({percentage:.2f}%)")
+
+        if random.choice([0, 1]) == 1:
+            total_scroll_distance = random.randint(200, 500)
+            scroll_step = 1
+            current_scroll = 0
+            while current_scroll < total_scroll_distance:
+                driver.execute_script("window.scrollBy(0, arguments[0]);", scroll_step)
+                current_scroll += scroll_step
+        
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
